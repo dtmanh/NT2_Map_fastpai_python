@@ -1,0 +1,18 @@
+# # dotenv
+# .env
+
+# # virtualenv
+# venv/
+
+# app/__pycache__/
+# __pycache__/
+# app/schemas/__pycache__/
+
+# .dbdata/
+# .idea/
+
+# *.pyc
+# data-es/
+
+# alembic.ini
+# *.ini

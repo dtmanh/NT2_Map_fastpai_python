@@ -1,0 +1,73 @@
+version: '3.3'
+services:
+  elasticsearch:
+    container_name: int-map-elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - bootstrap.memory_lock=true
+    ports:
+      - 9200:9200
+    volumes:
+      - data-es:/usr/share/elasticsearch/data
+    networks:
+      int2_map:
+
+  kibana:
+    container_name: int-map-kibana
+    image: docker.elastic.co/kibana/kibana:7.15.2
+    networks:
+      int2_map:
+    environment:
+      - ELASTICSEARCH_HOSTS=http://int-map-elasticsearch:9200
+    ports:
+      - 5601:5601
+  nginx_service:
+    container_name: nginx_service
+    image: nginx:alpine
+    depends_on:
+      # `app`Because the service (container) needs to be started first`depends_on`Is specified
+      - backend
+    ports:
+      #Port mapping:"Host OS port:container(Nginx)Port"
+      - "80:80"
+    volumes:
+      #volume mount:"Host OS path:Path in the container"
+      - ./web/conf.d:/etc/nginx/conf.d
+    networks:
+      - int2_map
+  db:
+    restart: always
+    image: postgres:13
+    networks:
+      int2_map:
+    volumes:
+      - .dbdata:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=int2_map
+      - POSTGRES_PASSWORD=int2_map
+      - POSTGRES_DB=int2_map
+    ports:
+      - 5432:80
+
+  backend:
+    container_name: backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    expose:
+      - 8001
+    command: python main.py
+    ports:
+      - 8001:80
+    networks:
+      int2_map:
+    volumes:
+      - .:/app
+networks:
+  int2_map:
+    driver: bridge
+volumes:
+  data-es:

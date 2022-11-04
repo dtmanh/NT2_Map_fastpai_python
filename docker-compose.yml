@@ -1,0 +1,68 @@
+version: '3.3'
+services:
+  elasticsearch:
+    container_name: int-map-elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - bootstrap.memory_lock=true
+    ports:
+      - 9200:9200
+    volumes:
+      - data-es:/usr/share/elasticsearch/data
+    networks:
+      int2_map:
+
+  kibana:
+    container_name: int-map-kibana
+    image: docker.elastic.co/kibana/kibana:7.15.2
+    networks:
+      int2_map:
+    environment:
+      - ELASTICSEARCH_HOSTS=http://int-map-elasticsearch:9200
+    ports:
+      - 5601:5601
+  db_postgis:
+    container_name: db_postgis
+    image: postgis/postgis:latest
+    ports:
+      - 5434:5432
+    environment:
+      - POSTGRES_USER=post_gis
+      - POSTGRES_PASSWORD=post_gis
+      - POSTGRES_DB=post_gis
+    volumes:
+      - postgis_data:/var/lib/postgresql/data/
+    networks:
+      int2_map:
+#  db:
+#    # restart: always
+#    image: postgres:13
+#    networks:
+#      int2_map:
+#    volumes:
+#      - .dbdata:/var/lib/postgresql/data/
+#    environment:
+#      - POSTGRES_USER=int2_map
+#      - POSTGRES_PASSWORD=int2_map
+#      - POSTGRES_DB=int2_map
+#    ports:
+#      - 5433:5432
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python main.py
+    ports:
+      - 8001:8001
+    networks:
+      int2_map:
+    volumes:
+      - .:/app
+networks:
+  int2_map:
+volumes:
+  data-es:
+  postgis_data:
